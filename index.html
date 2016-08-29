@@ -6,7 +6,7 @@ body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   position: relative;
   width: 99%;
-  background-color: #012;
+  background-color: #011;
 }
 
 div.tooltip {
@@ -27,6 +27,7 @@ div.tooltip {
 .axis text {
   font: 8px sans-serif;
   fill: white;
+  background-color: #011;
 }
 
 .tick {
@@ -37,6 +38,7 @@ div.tooltip {
 .axis line {
   stroke: #FFF;
   shape-rendering: crispEdges;
+  fill: #011;
 }
 
 .bar {
@@ -57,7 +59,7 @@ label {
 </style>
 
 <label for="rselect">Round
-<input type="range" id="rselect" min="1" value="1" max="23" step="1">
+<input type="range" id="rselect" min="1" value="1" max="19" step="1">
 <button type="button" id="start">start</button>
 <button type="button" id="stop">stop</button>
 </label>
@@ -72,7 +74,7 @@ var margin = {top: 20, right: 20, bottom: 30, left: 40},
     height = 700 - margin.top - margin.bottom;
 
 var x = d3.scale.ordinal()
-    .rangeRoundBands([0, width], .1, 1);
+    .rangeRoundBands([0, width], .2);
 
 var y = d3.scale.linear()
     .range([height, 0]);
