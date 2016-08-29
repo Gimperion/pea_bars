@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  position: relative;
+  width: 99%;
+  background-color: #012;
+}
+
+div.tooltip {
+    position: absolute;
+    text-align: center;
+    padding: 2px;
+    font: 12px sans-serif;
+    background: lightsteelblue;
+    border: 0px;
+    border-radius: 8px;
+    pointer-events: none;
+}
+
+.bar:hover{
+	fill: steelblue;
+}
+
+.axis text {
+  font: 8px sans-serif;
+  fill: white;
+}
+
+.tick {
+	fill: white;
+}
+
+.axis path,
+.axis line {
+  stroke: #FFF;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill-opacity: .8;
+}
+
+.x.axis path {
+  display: none;
+}
+
+label {
+   position: absolute;
+   top: 740px;
+   left: 80px;
+  color: #FFF;
+}
+
+</style>
+
+<label for="rselect">Round
+<input type="range" id="rselect" min="1" value="1" max="19" step="1">
+<button type="button" id="start">start</button>
+<button type="button" id="stop">stop</button>
+</label>
+
+
+<script src="d3.v3.min.js"></script>
+<script>
+
+var margin = {top: 20, right: 20, bottom: 30, left: 40},
+    //width = parseInt(d3.select('#body').style('width'), 10),
+    width = 1800 - margin.left - margin.right,
+    height = 700 - margin.top - margin.bottom;
+
+var x = d3.scale.ordinal()
+    .rangeRoundBands([0, width], .1, 1);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+	.tickFormat(function (d) { return ''; });
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+    //.tickFormat(formatPercent);
+
+var div = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var colors = d3.scale.linear()
+    .domain([0, 1.4])
+    .range(["#FFFF44", "#DD0000"])
+	.clamp(true);
+
+d3.csv("data.csv", function(error, data) {
+  data.forEach(function(d) {
+    d.round = +d.round;
+	d.price_mhz_pop = +d.price_mhz_pop;
+	d.net_surplus = +d.net_surplus;
+  });
+
+  x.domain(data.map(function(d) { return d.key; }));
+  y.domain([-10, d3.max(data, function(d) { return d.net_surplus; })]);
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Net Surplus");
+
+  svg.selectAll(".bar")
+      .data(data.filter(function(d) { return d.round == +document.getElementById("rselect").value}))
+    .enter().append("rect")
+      .attr("class", "bar")
+	  .attr("fill", function(d) { return colors(d.price_mhz_pop)})
+      .attr("x", function(d) { return x(d.key); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(Math.max(0, d.net_surplus)); })
+      .attr("height", function(d) { return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0)); })
+	  .on("mouseover", function(d) {
+			div.transition()
+				.duration(200)
+				.style("opacity", .9);
+			div	.html(d.key)
+				.style("left", (d3.event.pageX) + "px")
+				.style("top", (d3.event.pageY - 28) + "px");
+			})
+		.on("mouseout", function(d) {
+			div.transition()
+				.duration(500)
+				.style("opacity", 0);
+		});
+
+  d3.select("#rselect").on("change", function() {
+    update(data, this.value);
+  });
+
+  var myTimer;
+	d3.select("#start").on("click", function() {
+	    clearInterval (myTimer);
+	    myTimer = setInterval (function() {
+	    var b= d3.select("#rselect");
+	      var t = (+b.property("value") + 1) % (+b.property("max") + 1);
+	      if (t == 0) { t = +b.property("min"); }
+	      b.property("value", t);
+	      update(data, t);
+	  }, 500);
+	});
+
+	d3.select("#stop").on("click", function() {
+	    clearInterval (myTimer);
+	});
+});
+
+
+function update(data, rselect) {
+	console.log(data)
+	console.log(rselect)
+	var transition = svg.selectAll(".bar")
+		.data(data.filter(function(d) {return d.round == rselect}));
+
+	transition.enter().append("rect").attr("width", x.rangeBand());
+	transition.exit().remove();
+
+	transition.transition().duration(300)
+		.attr("fill", function(d) { return colors(d.price_mhz_pop)})
+        .attr("x", function(d) { return x(d.key); })
+        .attr("width", x.rangeBand())
+        .attr("y", function(d) { return y(Math.max(0, d.net_surplus)); })
+        .attr("height", function(d) { return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0)); });
+	//transition.exit().remove();
+}
+
+</script>
