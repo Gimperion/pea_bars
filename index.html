@@ -1,37 +1,38 @@
 <!DOCTYPE html>
+<!-- Data Visualization by Tommy Shen
+	Bloomberg BNA
+	Data from FCC Incentive Auction 126 MHz, Forward Auction
+	https://auctiondata.fcc.gov/public/projects/1000/reports/product_status-stage1
+ -->
+
 <meta charset="utf-8">
 <style>
-
 body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  position: relative;
-  background-color: #011;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	position: relative;
+	background-color: #011;
 }
 
 div.tooltip {
-    position: absolute;
-    text-align: center;
-    padding: 3px;
-    font: 14px sans-serif;
-    background: #CFF;
-    border: 0px;
-    border-radius: 8px;
-    pointer-events: none;
+	position: absolute;
+	text-align: center;
+	padding: 3px;
+	font: 14px sans-serif;
+	background: #CFF;
+	border: 0px;
+	border-radius: 8px;
+	pointer-events: none;
 }
 
-.bar:hover{
-	fill: #66F;
-}
+.bar:hover{ fill: #66F;}
 
 .axis text {
-  font: 8px sans-serif;
+  font: 9px sans-serif;
   fill: white;
   background-color: #011;
 }
 
-.tick {
-	fill: white;
-}
+.tick { fill: white;}
 
 .axis path,
 .axis line {
@@ -41,7 +42,7 @@ div.tooltip {
 }
 
 .bar {
-	fill-opacity: .9;
+	fill-opacity: .92;
 }
 
 .x.axis path {
@@ -58,7 +59,7 @@ label {
 </style>
 
 <label for="rselect">Round
-<input type="range" id="rselect" min="1" value="1" max="25" step="1">
+<input type="range" id="rselect" min="1" value="1" max="26" step="1">
 <button type="button" id="start">start</button>
 <button type="button" id="stop">stop</button>
 </label>
@@ -66,15 +67,13 @@ label {
 
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
+var round_text = ["Auction starts with concentrated demand in top 10 markets.",
+	"Bidding shifts into the top 35.",
+	"Smaller markets start to come into play.",
+	"Bidding driven by NY and LA and smaller markets.",
+	"Bidding falls off while Eagle Pass, TX spikes."];
 
-
-var round_text = ["Auction starts with high demand in top 10 markets.",
-	"Bidding picking up in top 35.",
-	"Bids spiking in PEAs 40-50.",
-	"Bidding strong in New York and LA and 40-50.",
-	"Eagle Pass, TX happens."];
-
-var margin = {top: 50, right: 20, bottom: 20, left: 20},
+var margin = {top: 50, right: 20, bottom: 70, left: 20},
 	width = 1350 - margin.left - margin.right,
 	height = 650 - margin.top - margin.bottom;
 
@@ -83,20 +82,19 @@ var x = d3.scale.ordinal().rangeRoundBands([0, width], .5);
 var y = d3.scale.linear().range([height, 0]);
 
 var xAxis = d3.svg.axis()
-    .scale(x)
-    .orient("bottom")
+	.scale(x)
+	.orient("bottom")
 	.tickFormat(function (d) { return ''; });
 
 var yAxis = d3.svg.axis()
-    .scale(y)
-    .orient("left")
+	.scale(y)
+	.orient("left")
 	.innerTickSize(-width)
-    .outerTickSize(0);
-    //.tickFormat(formatPercent);
+	.outerTickSize(0);
 
 var div = d3.select("body").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
+	.attr("class", "tooltip")
+	.style("opacity", 0);
 
 var svg = d3.select("body").append("svg")
 		.attr("width", width + margin.left + margin.right)
@@ -105,15 +103,15 @@ var svg = d3.select("body").append("svg")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var colors = d3.scale.linear()
-    .domain([0.001, 1.8])
-    .range(["#FFEFA0", "#A00040"])
+	.domain([0.001, 1.6])
+	.range(["#FFEF80", "#A00040"])
 	.clamp(true);
 
 var title = svg.append("g")
 		.attr("class", "title")
 	.append("text")
 		.attr("x", (width / 2))
-		.attr("y", 12 - (margin.top / 2))
+		.attr("y", 15 - (margin.top / 2))
 		.attr("text-anchor", "middle")
 		.style("font-size", "25px")
 		.style("fill", "white");
@@ -121,10 +119,10 @@ var title = svg.append("g")
 var summary = svg.append("g")
 		.attr("class", "summary")
 	.append("text")
-		.attr("x", (3*width / 4))
-		.attr("y", 80 - (margin.top / 2))
+		.attr("x", width / 2)
+		.attr("y", height - 6)
 		.attr("text-anchor", "middle")
-		.style("font-size", "16px")
+		.style("font-size", "18px")
 		.style("fill", "white");
 
 d3.csv("data.csv", function(error, data) {
@@ -143,11 +141,12 @@ d3.csv("data.csv", function(error, data) {
 	.append("text")
 		.attr("transform", "rotate(-90)")
 		.attr("y", 6)
-		.attr("dy", ".71em")
+		.attr("dy", ".8em")
 		.style("text-anchor", "end")
 		.text("Net Surplus");
 
 	title.text(function(){ return "Round " +  document.getElementById("rselect").value});
+	summary.text(round_text[0]);
 
 	svg.selectAll(".bar")
 		.data(data.filter(function(d) { return d.round == +document.getElementById("rselect").value}))
@@ -237,7 +236,7 @@ function update(data, rselect) {
 		});
 
 	summary.text(function(){
-		return round_text[Math.round((rselect-1)/6)];
+		return round_text[Math.round(rselect/6)];
 	});
 
 	title.text(function(){ return "Round " +  rselect});
