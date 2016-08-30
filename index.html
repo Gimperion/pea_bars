@@ -12,16 +12,16 @@ body {
 div.tooltip {
     position: absolute;
     text-align: center;
-    padding: 2px;
-    font: 12px sans-serif;
-    background: lightsteelblue;
+    padding: 3px;
+    font: 14px sans-serif;
+    background: #CFF;
     border: 0px;
     border-radius: 8px;
     pointer-events: none;
 }
 
 .bar:hover{
-	fill: steelblue;
+	fill: #66F;
 }
 
 .axis text {
@@ -36,7 +36,7 @@ div.tooltip {
 
 .axis path,
 .axis line {
-  stroke: #FFF;
+  stroke: #CCC;
   shape-rendering: crispEdges;
   fill: #011;
 }
@@ -59,7 +59,7 @@ label {
 </style>
 
 <label for="rselect">Round
-<input type="range" id="rselect" min="1" value="1" max="19" step="1">
+<input type="range" id="rselect" min="1" value="1" max="24" step="1">
 <button type="button" id="start">start</button>
 <button type="button" id="stop">stop</button>
 </label>
@@ -69,15 +69,12 @@ label {
 <script>
 
 var margin = {top: 20, right: 20, bottom: 30, left: 40},
-    //width = parseInt(d3.select('#body').style('width'), 10),
-    width = 1800 - margin.left - margin.right,
-    height = 700 - margin.top - margin.bottom;
+	width = 1800 - margin.left - margin.right,
+	height = 700 - margin.top - margin.bottom;
 
-var x = d3.scale.ordinal()
-    .rangeRoundBands([0, width], .2);
+var x = d3.scale.ordinal().rangeRoundBands([0, width], .2);
 
-var y = d3.scale.linear()
-    .range([height, 0]);
+var y = d3.scale.linear().range([height, 0]);
 
 var xAxis = d3.svg.axis()
     .scale(x)
@@ -86,7 +83,9 @@ var xAxis = d3.svg.axis()
 
 var yAxis = d3.svg.axis()
     .scale(y)
-    .orient("left");
+    .orient("left")
+	.innerTickSize(-width)
+    .outerTickSize(0);
     //.tickFormat(formatPercent);
 
 var div = d3.select("body").append("div")
@@ -104,45 +103,63 @@ var colors = d3.scale.linear()
     .range(["#FFFF44", "#DD0000"])
 	.clamp(true);
 
+var title = svg.append("g")
+  .attr("class", "title")
+.append("text")
+  .attr("x", (width / 2))
+  .attr("y", 12 - (margin.top / 2))
+  .attr("text-anchor", "middle")
+  .style("font-size", "25px")
+  .style("fill", "white");
+
 d3.csv("data.csv", function(error, data) {
-  data.forEach(function(d) {
-    d.round = +d.round;
-	d.price_mhz_pop = +d.price_mhz_pop;
-	d.net_surplus = +d.net_surplus;
-  });
+	data.forEach(function(d) {
+		d.round = +d.round;
+		d.price_mhz_pop = +d.price_mhz_pop;
+		d.net_surplus = +d.net_surplus;
+	});
 
-  x.domain(data.map(function(d) { return d.key; }));
-  y.domain([-10, d3.max(data, function(d) { return d.net_surplus; })]);
+	x.domain(data.map(function(d) { return d.key; }));
+	y.domain([-10, d3.max(data, function(d) { return d.net_surplus; })]);
 
-  svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis);
+	svg.append("g")
+		.attr("class", "x axis")
+		.attr("transform", "translate(0," + height + ")")
+		.call(xAxis);
 
-  svg.append("g")
-      .attr("class", "y axis")
-      .call(yAxis)
-    .append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 6)
-      .attr("dy", ".71em")
-      .style("text-anchor", "end")
-      .text("Net Surplus");
+	svg.append("g")
+	  .attr("class", "y axis")
+	  .call(yAxis)
+	.append("text")
+	  .attr("transform", "rotate(-90)")
+	  .attr("y", 6)
+	  .attr("dy", ".71em")
+	  .style("text-anchor", "end")
+	  .text("Net Surplus");
 
-  svg.selectAll(".bar")
+	title.text(function(){ return "Round " +  document.getElementById("rselect").value})
+
+	svg.selectAll(".bar")
       .data(data.filter(function(d) { return d.round == +document.getElementById("rselect").value}))
-    .enter().append("rect")
-      .attr("class", "bar")
-	  .attr("fill", function(d) { return colors(d.price_mhz_pop)})
-      .attr("x", function(d) { return x(d.key); })
-      .attr("width", x.rangeBand())
-      .attr("y", function(d) { return y(Math.max(0, d.net_surplus)); })
-      .attr("height", function(d) { return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0)); })
+	.enter().append("rect")
+		.attr("class", "bar")
+		.attr("fill", function(d) { return colors(d.price_mhz_pop)})
+		.attr("x", function(d) { return x(d.key); })
+		.attr("width", x.rangeBand())
+		.attr("y", function(d) {
+			if(d.net_surplus == 0){
+				y(0) + 5;
+			}
+			return y(Math.max(0, d.net_surplus));
+		})
+		.attr("height", function(d) {
+			return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0));
+		})
 	  .on("mouseover", function(d) {
 			div.transition()
 				.duration(200)
 				.style("opacity", .9);
-			div	.html(d.key)
+			div.html(d.key + "<br/>Net Surplus: " + d.net_surplus + ", $" + Math.round(d.price_mhz_pop* 100) / 100)
 				.style("left", (d3.event.pageX) + "px")
 				.style("top", (d3.event.pageY - 28) + "px");
 			})
@@ -152,44 +169,59 @@ d3.csv("data.csv", function(error, data) {
 				.style("opacity", 0);
 		});
 
-  d3.select("#rselect").on("change", function() {
-    update(data, this.value);
-  });
+	d3.select("#rselect").on("change", function() {
+		update(data, this.value);
+	});
 
-  var myTimer;
-	d3.select("#start").on("click", function() {
-	    clearInterval (myTimer);
-	    myTimer = setInterval (function() {
-	    var b= d3.select("#rselect");
-	      var t = (+b.property("value") + 1) % (+b.property("max") + 1);
-	      if (t == 0) { t = +b.property("min"); }
-	      b.property("value", t);
-	      update(data, t);
-	  }, 500);
+	var myTimer;
+	d3.select("#start")
+		.on("click", function() {
+			clearInterval (myTimer);
+			var b = d3.select("#rselect");
+			myTimer = setInterval(function() {
+				var t = (+b.property("value") + 1) % (+b.property("max") + 1);
+				if (t == 0) { t = +b.property("min"); }
+				b.property("value", t);
+				update(data, t);
+			}, 400);
 	});
 
 	d3.select("#stop").on("click", function() {
 	    clearInterval (myTimer);
 	});
 });
-
+//
+// function getDelay(round){
+// 	console.log(round);
+// 	console.log(200 + 10 * round);
+// 	return(200 + 10 * round);
+// }
 
 function update(data, rselect) {
-	console.log(data)
-	console.log(rselect)
 	var transition = svg.selectAll(".bar")
 		.data(data.filter(function(d) {return d.round == rselect}));
 
 	transition.enter().append("rect").attr("width", x.rangeBand());
 	transition.exit().remove();
 
-	transition.transition().duration(300)
+	transition.transition()
+		.duration(380)
 		.attr("fill", function(d) { return colors(d.price_mhz_pop)})
         .attr("x", function(d) { return x(d.key); })
         .attr("width", x.rangeBand())
-        .attr("y", function(d) { return y(Math.max(0, d.net_surplus)); })
+		.attr("y", function(d) {
+			if(d.net_surplus == 0){
+				console.log("test");
+				return y(0) + 10;
+			} else{
+				return y(Math.max(0, d.net_surplus));
+			}
+		})
         .attr("height", function(d) { return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0)); });
-	//transition.exit().remove();
+
+	transition.select("title")
+
+	title.text(function(){ return "Round " +  rselect})
 }
 
 </script>
