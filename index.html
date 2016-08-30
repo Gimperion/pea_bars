@@ -35,13 +35,13 @@ div.tooltip {
 
 .axis path,
 .axis line {
-  stroke: #CCC;
-  shape-rendering: crispEdges;
-  fill: #021;
+	stroke: #CCC;
+	shape-rendering: crispEdges;
+	fill: #021;
 }
 
 .bar {
-  fill-opacity: .8;
+	fill-opacity: .9;
 }
 
 .x.axis path {
@@ -50,7 +50,7 @@ div.tooltip {
 
 label {
    position: absolute;
-   top: 620px;
+   top: 680px;
    left: 80px;
   color: #FFF;
 }
@@ -67,9 +67,16 @@ label {
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
 
-var margin = {top: 20, right: 20, bottom: 20, left: 20},
+
+var round_text = ["Auction starts with high demand in top 10 markets.",
+	"Bidding picking up in top 35.",
+	"Bids spiking in PEAs 40-50.",
+	"Bidding strong in New York and LA and 40-50.",
+	"Eagle Pass, TX happens."];
+
+var margin = {top: 50, right: 20, bottom: 20, left: 20},
 	width = 1350 - margin.left - margin.right,
-	height = 600 - margin.top - margin.bottom;
+	height = 650 - margin.top - margin.bottom;
 
 var x = d3.scale.ordinal().rangeRoundBands([0, width], .5);
 
@@ -98,18 +105,27 @@ var svg = d3.select("body").append("svg")
 		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var colors = d3.scale.linear()
-    .domain([0, 1.4])
-    .range(["#FFFF44", "#DD0000"])
+    .domain([0.001, 1.8])
+    .range(["#FFEFA0", "#A00040"])
 	.clamp(true);
 
 var title = svg.append("g")
-  .attr("class", "title")
-.append("text")
-  .attr("x", (width / 2))
-  .attr("y", 12 - (margin.top / 2))
-  .attr("text-anchor", "middle")
-  .style("font-size", "25px")
-  .style("fill", "white");
+		.attr("class", "title")
+	.append("text")
+		.attr("x", (width / 2))
+		.attr("y", 12 - (margin.top / 2))
+		.attr("text-anchor", "middle")
+		.style("font-size", "25px")
+		.style("fill", "white");
+
+var summary = svg.append("g")
+		.attr("class", "summary")
+	.append("text")
+		.attr("x", (3*width / 4))
+		.attr("y", 80 - (margin.top / 2))
+		.attr("text-anchor", "middle")
+		.style("font-size", "16px")
+		.style("fill", "white");
 
 d3.csv("data.csv", function(error, data) {
 	data.forEach(function(d) {
@@ -121,25 +137,20 @@ d3.csv("data.csv", function(error, data) {
 	x.domain(data.map(function(d) { return d.key; }));
 	y.domain([-10, d3.max(data, function(d) { return d.net_surplus; })]);
 
-	// svg.append("g")
-	// 	.attr("class", "x axis")
-	// 	.attr("transform", "translate(0," + height + ")")
-	// 	.call(xAxis);
-
 	svg.append("g")
-	  .attr("class", "y axis")
-	  .call(yAxis)
+		.attr("class", "y axis")
+		.call(yAxis)
 	.append("text")
-	  .attr("transform", "rotate(-90)")
-	  .attr("y", 6)
-	  .attr("dy", ".71em")
-	  .style("text-anchor", "end")
-	  .text("Net Surplus");
+		.attr("transform", "rotate(-90)")
+		.attr("y", 6)
+		.attr("dy", ".71em")
+		.style("text-anchor", "end")
+		.text("Net Surplus");
 
-	title.text(function(){ return "Round " +  document.getElementById("rselect").value})
+	title.text(function(){ return "Round " +  document.getElementById("rselect").value});
 
 	svg.selectAll(".bar")
-      .data(data.filter(function(d) { return d.round == +document.getElementById("rselect").value}))
+		.data(data.filter(function(d) { return d.round == +document.getElementById("rselect").value}))
 	.enter().append("rect")
 		.attr("class", "bar")
 		.attr("fill", function(d) { return colors(d.price_mhz_pop)})
@@ -188,7 +199,7 @@ d3.csv("data.csv", function(error, data) {
 				if (t == 0) { t = +b.property("min"); }
 				b.property("value", t);
 				update(data, t);
-			}, 420);
+			}, 650);
 	});
 
 	d3.select("#stop").on("click", function() {
@@ -224,6 +235,10 @@ function update(data, rselect) {
 				return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0));
 			}
 		});
+
+	summary.text(function(){
+		return round_text[Math.round((rselect-1)/6)];
+	});
 
 	title.text(function(){ return "Round " +  rselect});
 }
