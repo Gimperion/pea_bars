@@ -5,7 +5,6 @@
 body {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
   position: relative;
-  width: 99%;
   background-color: #011;
 }
 
@@ -38,7 +37,7 @@ div.tooltip {
 .axis line {
   stroke: #CCC;
   shape-rendering: crispEdges;
-  fill: #011;
+  fill: #021;
 }
 
 .bar {
@@ -51,7 +50,7 @@ div.tooltip {
 
 label {
    position: absolute;
-   top: 740px;
+   top: 620px;
    left: 80px;
   color: #FFF;
 }
@@ -65,14 +64,14 @@ label {
 </label>
 
 
-<script src="d3.v3.min.js"></script>
+<script src="//d3js.org/d3.v3.min.js"></script>
 <script>
 
-var margin = {top: 20, right: 20, bottom: 30, left: 40},
-	width = 1800 - margin.left - margin.right,
-	height = 700 - margin.top - margin.bottom;
+var margin = {top: 20, right: 20, bottom: 20, left: 20},
+	width = 1350 - margin.left - margin.right,
+	height = 600 - margin.top - margin.bottom;
 
-var x = d3.scale.ordinal().rangeRoundBands([0, width], .2);
+var x = d3.scale.ordinal().rangeRoundBands([0, width], .5);
 
 var y = d3.scale.linear().range([height, 0]);
 
@@ -93,10 +92,10 @@ var div = d3.select("body").append("div")
     .style("opacity", 0);
 
 var svg = d3.select("body").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+		.attr("width", width + margin.left + margin.right)
+		.attr("height", height + margin.top + margin.bottom)
+	.append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 var colors = d3.scale.linear()
     .domain([0, 1.4])
@@ -122,10 +121,10 @@ d3.csv("data.csv", function(error, data) {
 	x.domain(data.map(function(d) { return d.key; }));
 	y.domain([-10, d3.max(data, function(d) { return d.net_surplus; })]);
 
-	svg.append("g")
-		.attr("class", "x axis")
-		.attr("transform", "translate(0," + height + ")")
-		.call(xAxis);
+	// svg.append("g")
+	// 	.attr("class", "x axis")
+	// 	.attr("transform", "translate(0," + height + ")")
+	// 	.call(xAxis);
 
 	svg.append("g")
 	  .attr("class", "y axis")
@@ -148,14 +147,20 @@ d3.csv("data.csv", function(error, data) {
 		.attr("width", x.rangeBand())
 		.attr("y", function(d) {
 			if(d.net_surplus == 0){
-				y(0) + 5;
+				console.log(y(0) + 50);
+				return (y(0)-2);
+			} else{
+				return y(Math.max(0, d.net_surplus));
 			}
-			return y(Math.max(0, d.net_surplus));
 		})
 		.attr("height", function(d) {
-			return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0));
+			if(d.net_surplus==0){
+				return 4;
+			} else{
+				return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0));
+			}
 		})
-	  .on("mouseover", function(d) {
+		.on("mouseover", function(d) {
 			div.transition()
 				.duration(200)
 				.style("opacity", .9);
@@ -183,19 +188,14 @@ d3.csv("data.csv", function(error, data) {
 				if (t == 0) { t = +b.property("min"); }
 				b.property("value", t);
 				update(data, t);
-			}, 400);
+			}, 420);
 	});
 
 	d3.select("#stop").on("click", function() {
 	    clearInterval (myTimer);
 	});
 });
-//
-// function getDelay(round){
-// 	console.log(round);
-// 	console.log(200 + 10 * round);
-// 	return(200 + 10 * round);
-// }
+
 
 function update(data, rselect) {
 	var transition = svg.selectAll(".bar")
@@ -205,23 +205,27 @@ function update(data, rselect) {
 	transition.exit().remove();
 
 	transition.transition()
-		.duration(380)
+		.duration(420)
 		.attr("fill", function(d) { return colors(d.price_mhz_pop)})
         .attr("x", function(d) { return x(d.key); })
         .attr("width", x.rangeBand())
 		.attr("y", function(d) {
 			if(d.net_surplus == 0){
-				console.log("test");
-				return y(0) + 10;
+				console.log(y(0) + 50);
+				return (y(0)-2);
 			} else{
 				return y(Math.max(0, d.net_surplus));
 			}
 		})
-        .attr("height", function(d) { return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0)); });
+		.attr("height", function(d) {
+			if(d.net_surplus==0){
+				return 4;
+			} else{
+				return Math.max(y(0) - y(d.net_surplus),y(d.net_surplus) - y(0));
+			}
+		});
 
-	transition.select("title")
-
-	title.text(function(){ return "Round " +  rselect})
+	title.text(function(){ return "Round " +  rselect});
 }
 
 </script>
