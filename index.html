@@ -82,11 +82,11 @@ label {
 
 <script src="//d3js.org/d3.v3.min.js"></script>
 <script>
-var round_text = ["Auction starts with concentrated demand in top 10 markets.",
-	"Bidding shifts into the top 35.",
-	"Smaller markets start to come into play.",
-	"Bidding driven by NY and LA and smaller markets.",
-	"Bidding falls off while Eagle Pass, TX spikes."];
+var round_text = ["Auction starts with concentrated demand in top 10 markets",
+	"Bidding shifts into the top 35",
+	"Smaller markets start to come into play",
+	"Bidding driven by NY and LA and smaller markets",
+	"Bidding falls off while demand for Eagle Pass, TX (C2) spikes"];
 
 var margin = {top: 50, right: 20, bottom: 70, left: 20},
 	width = 1350 - margin.left - margin.right,
@@ -201,7 +201,7 @@ d3.csv("data.csv", function(error, data) {
 		.attr("y", 6)
 		.attr("dy", ".8em")
 		.style("text-anchor", "end")
-		.text("Net Surplus");
+		.text("Net Demand");
 
 	title.text(function(){ return "Round " +  document.getElementById("rselect").value});
 	summary.text(round_text[0]);
@@ -232,7 +232,7 @@ d3.csv("data.csv", function(error, data) {
 			div.transition()
 				.duration(200)
 				.style("opacity", .9);
-			div.html(d.key + "<br/>Net Surplus: " + d.net_surplus + ", $" + Math.round(d.price_mhz_pop* 100) / 100)
+			div.html(d.key + "<br/>Net Demand: " + d.net_surplus + ", $" + Math.round(d.price_mhz_pop* 100) / 100)
 				.style("left", (d3.event.pageX) + "px")
 				.style("top", (d3.event.pageY - 28) + "px");
 			})
@@ -294,7 +294,13 @@ function update(data, rselect) {
 		});
 
 	summary.text(function(){
-		return round_text[Math.round(rselect/6)];
+
+		if(rselect < 27){
+			return round_text[Math.round(rselect/6)];
+		} else{
+			return "FCC ends Stage 1 at 27 rounds with mostly C2 licenses in contention"
+		}
+
 	});
 
 	title.text(function(){ return "Round " +  rselect});
